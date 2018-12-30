@@ -30,62 +30,46 @@
     Set-ExecutionPolicy Unrestricted
     . { iwr -useb http://boxstarter.org/bootstrapper.ps1 } | iex; get-boxstarter -Force
     $cred=Get-Credential
-    Install-BoxstarterPackage -PackageName https://raw.githubusercontent.com/neutmute/nm-boxstarter/master/base-box.ps1 -Credential $cred
+    Install-BoxstarterPackage -PackageName https://raw.githubusercontent.com/sweiz/nm-boxstarter/master/base-box.ps1 -Credential $cred
 #>
 
 $userSettingsApps = @(
     'taskbar-never-combine'
     ,'explorer-show-all-folders'
     ,'explorer-expand-to-current-folder'
+    
+)
+
+$siteApps = @(
+   'Office365Business'
+   ,'microsoft-teams'
+   ,'notepadplusplus.install'
+   ,'lastpass'
+   ,'slack'
+   ,'filezilla'
+   ,'putty'
+   ,'winscp'
+   ,'wireshark'
+   ,'nmap'
+   ,'autohotkey.install'
 )
 
 $coreApps = @(
     'chocolatey'
     ,'firefox'
     ,'googlechrome'
+    ,'adobereader'
+    ,'adobereader-update'
+    ,'windirstat'
     ,'flashplayerplugin'
-    ,'notepadplusplus.install'
-    ,'paint.net'
-    ,'irfanview'
-    ,'irfanviewplugins'
     ,'7zip.install'
-    ,'lastpass'
-    ,'launchy'
-    ,'wintail'
-    ,'fscapture'
     ,'shutup10'                  #Windows 10 privacy. Execute with OOSU10.exe
-    ,'veracrypt'        
-    
+    ,'procexp'
+    ,'cutepdf'
+    ,'dotnet4.6'
+
     #,'bulkrenameutility'        #works normally but fails under boxstarter
     #,'agentransack'             #works normally but fails under boxstarter
-)
-
-$homeApps = @(
-    'k-litecodecpackfull'
-    ,'itunes'
-    ,'pidgin'
-    ,'handbrake.install'
-    ,'steam'
-    ,'syncback'
-    ,'spotify'
-    ,'wakemeonlan'
-    ,'evernote'
-    ,'calibre'
-    ,'imgburn'
-    ,'winamp'        
-    ,'audacity'
-)
-
-$htpcApps = @(
-    'k-litecodecpackfull'
-    ,'mssql2014express-defaultinstance'
-    ,'sql-server-management-studio'
-    ,'plexmediaserver'
-    ,'steam'
-    ,'syncback'
-    ,'kodi'
-    #'tightvnc'     # hipporemote is dead
-    #'setpoint'     # logitech
 )
 
 $Boxstarter.RebootOk=$true
@@ -196,36 +180,15 @@ function InstallChocoDevApps
     #choco install jdk7                  --limitoutput  #neo4j - but can use docker now
 
     $devApps = @(
-        'nsis.install'
-        ,'commandwindowhere'
-        ,'filezilla'
-        ,'putty'
-        ,'winscp'
-        ,'wireshark'
-        ,'nmap'
-        ,'autohotkey.install'
-        ,'console2'
-        ,'virtualbox'
-        ,'dotpeek'
-        ,'nuget.commandline'
-        ,'nugetpackageexplorer'
-        ,'rdcman'                   # remote desktop connection manager
-        ,'diffmerge'
-        ,'cmake'                     #emgucv
-        ,'fiddler4'
-        ,'visualstudiocode'
+        'visualstudiocode'
         ,'nodejs'
         ,'checksum'
         ,'gitextensions'
-        ,'ilspy'
-        ,'poshgit'
-        ,'vswhere'
     )
     
     InstallChocoApps $devApps
 
     choco install git -params '"/GitAndUnixToolsOnPath"'
-    choco install sourcetree #do last since not silent
 }
 
 function InstallVisualStudio()
@@ -289,7 +252,7 @@ function InstallInternetInformationServices()
 function DownloadConfigFiles()
 {
     Write-Host 'Configuring Notepad++'
-    $notepadShortcutConfigRemote = 'https://raw.githubusercontent.com/neutmute/nm-boxstarter/master/files/notepad%2B%2B/shortcuts.xml'
+    $notepadShortcutConfigRemote = 'https://raw.githubusercontent.com/sweiz/nm-boxstarter/master/files/notepad%2B%2B/shortcuts.xml'
     $notepadShortcutConfigLocal = "$($env:AppData)\Notepad++\shortcuts.xml"
     Invoke-WebRequest -Uri $notepadShortcutConfigRemote -OutFile $notepadShortcutConfigLocal
 }
@@ -335,16 +298,7 @@ InstallChocoApps $userSettingsApps
 
 InstallChocoApps $coreApps
 
-if (Test-Path env:\BoxStarterInstallHome)
-{
-    Enable-RemoteDesktop                            # already enabled on corp machine and it failed when running
-    InstallChocoApps $homeApps
-}
-
-if (Test-Path env:\BoxStarterInstallHtpc)
-{
-    InstallChocoApps $htpcApps
-}
+InstallChocoApps $siteApps
 
 if ($hasDdrive)
 {
@@ -356,9 +310,9 @@ if (Test-Path env:\BoxStarterInstallDev)
 {
     Write-BoxstarterMessage "Installing Dev Apps"
     InstallChocoDevApps
-    InstallSqlServer
-    InstallInternetInformationServices
-    InstallVisualStudio
+    #InstallSqlServer
+    #InstallInternetInformationServices
+    # InstallVisualStudio
 }
 
 CleanDesktopShortcuts
@@ -366,10 +320,10 @@ CleanDesktopShortcuts
 DownloadConfigFiles
 
 # Assume Windows 10
-Install-BoxstarterPackage -PackageName https://raw.githubusercontent.com/neutmute/nm-boxstarter/master/win10-clean.ps1
+Install-BoxstarterPackage -PackageName https://raw.githubusercontent.com/sweiz/nm-boxstarter/master/win10-clean.ps1
 
 # Leaving global confirmation enabled
 # choco feature disable --name=allowGlobalConfirmation
 
 Write-Host "Follow extra optional cleanup steps in win10-clean.ps1"
-start https://raw.githubusercontent.com/neutmute/nm-boxstarter/master/win10-clean.ps1
+start https://raw.githubusercontent.com/sweiz/nm-boxstarter/master/win10-clean.ps1
