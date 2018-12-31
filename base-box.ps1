@@ -33,6 +33,8 @@
     Install-BoxstarterPackage -PackageName https://raw.githubusercontent.com/sweiz/nm-boxstarter/master/base-box.ps1 -Credential $cred
 #>
 
+Disable-UAC
+
 $userSettingsApps = @(
     'taskbar-never-combine'
     ,'explorer-show-all-folders'
@@ -52,6 +54,7 @@ $siteApps = @(
    ,'wireshark'
    ,'nmap'
    ,'autohotkey.install'
+   ,'dropbox'
 )
 
 $coreApps = @(
@@ -185,10 +188,15 @@ function InstallChocoDevApps
         ,'checksum'
         ,'gitextensions'
     )
-    
+    Set-WindowsExplorerOptions -EnableShowHiddenFilesFoldersDrives -EnableShowProtectedOSFiles -EnableShowFileExtensions
     InstallChocoApps $devApps
-
-    choco install git -params '"/GitAndUnixToolsOnPath"'
+    choco install sysinternals -y
+    choco install git -params '"/GitAndUnixToolsOnPath /WindowsTerminal"' -y
+    choco install poshgit docker-for-windows -y
+    choco install Microsoft-Hyper-V-All -source windowsFeatures
+    choco install Microsoft-Windows-Subsystem-Linux -source windowsfeatures
+    Invoke-WebRequest -Uri https://aka.ms/wsl-ubuntu-1604 -OutFile ~/Ubuntu.appx -UseBasicParsing
+    Add-AppxPackage -Path ~/Ubuntu.appx
 }
 
 function InstallVisualStudio()
@@ -261,7 +269,7 @@ function CleanDesktopShortcuts()
 {
     Write-Host "Cleaning desktop of shortcuts"
     $allUsersDesktop = "C:\Users\Public\Desktop"
-    Get-ChildItem -Path $allUsersDesktop\*.lnk -Exclude *BoxStarter* | remove-item
+    Get-ChildItem -Path $allUsersDesktop\*.lnk | remove-item
 }
 
 function ConfigureDdrive()
@@ -300,10 +308,10 @@ InstallChocoApps $coreApps
 
 InstallChocoApps $siteApps
 
-if ($hasDdrive)
-{
-    ConfigureDdrive
-}
+#if ($hasDdrive)
+#{
+#    ConfigureDdrive
+#}
 
 # Put last as the big SQL server / VS2017 tend to fail and kill Boxstarter it seems
 if (Test-Path env:\BoxStarterInstallDev)
@@ -314,6 +322,63 @@ if (Test-Path env:\BoxStarterInstallDev)
     #InstallInternetInformationServices
     # InstallVisualStudio
 }
+
+# Messaging
+Get-AppxPackage Microsoft.Messaging | Remove-AppxPackage
+
+# Minecraft
+Get-AppxPackage *Minecraft* | Remove-AppxPackage
+
+# Netflix
+Get-AppxPackage *Netflix* | Remove-AppxPackage
+
+# Office Hub
+Get-AppxPackage Microsoft.MicrosoftOfficeHub | Remove-AppxPackage
+
+# One Connect
+Get-AppxPackage Microsoft.OneConnect | Remove-AppxPackage
+
+# OneNote
+Get-AppxPackage Microsoft.Office.OneNote | Remove-AppxPackage
+
+# People
+Get-AppxPackage Microsoft.People | Remove-AppxPackage
+
+# Phone
+Get-AppxPackage Microsoft.WindowsPhone | Remove-AppxPackage
+
+# Photos
+Get-AppxPackage Microsoft.Windows.Photos | Remove-AppxPackage
+
+# Plex
+Get-AppxPackage *Plex* | Remove-AppxPackage
+
+# Skype (Metro version)
+Get-AppxPackage Microsoft.SkypeApp | Remove-AppxPackage
+
+# Sound Recorder
+Get-AppxPackage Microsoft.WindowsSoundRecorder | Remove-AppxPackage
+
+# Solitaire
+Get-AppxPackage *Solitaire* | Remove-AppxPackage
+
+# Sticky Notes
+#Get-AppxPackage Microsoft.MicrosoftStickyNotes | Remove-AppxPackage
+
+# Sway
+Get-AppxPackage Microsoft.Office.Sway | Remove-AppxPackage
+
+# Twitter
+Get-AppxPackage *Twitter* | Remove-AppxPackage
+
+# Xbox
+Get-AppxPackage Microsoft.XboxApp | Remove-AppxPackage
+Get-AppxPackage Microsoft.XboxIdentityProvider | Remove-AppxPackage
+
+# Zune Music, Movies & TV
+Get-AppxPackage Microsoft.ZuneMusic | Remove-AppxPackage
+Get-AppxPackage Microsoft.ZuneVideo | Remove-AppxPackage
+
 
 CleanDesktopShortcuts
 
@@ -327,3 +392,11 @@ Install-BoxstarterPackage -PackageName https://raw.githubusercontent.com/sweiz/n
 
 Write-Host "Follow extra optional cleanup steps in win10-clean.ps1"
 start https://raw.githubusercontent.com/sweiz/nm-boxstarter/master/win10-clean.ps1
+
+$SMBiosAssetTag = (Get-WmiObject -query "Select * from Win32_SystemEnclosure").SMBiosAssetTag
+$ClientIdPrefix = [Environment]::GetEnvironmentVariable("ClientIdPrefix", "Machine")
+(Get-WmiObject Win32_ComputerSystem).Rename("$ClientIdPrefix-$SMBiosAssetTag")
+
+Enable-UAC
+Enable-MicrosoftUpdate
+Install-WindowsUpdate -acceptEula
